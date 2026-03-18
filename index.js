@@ -96,6 +96,8 @@ function captureSnapshot(cam) {
     "1",
     "-q:v",
     "2",
+    "-f",
+    "image2",
     "-y",
     tmpPath,
   ];
