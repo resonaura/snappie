@@ -1,0 +1,20 @@
+# snappie configuration
+
+# Port the HTTP server listens on
+port: 1985
+
+# How often (in seconds) to grab a new frame from each camera
+interval: 10
+
+# List of RTSP cameras
+# slug  — URL-friendly name, used as the HTTP endpoint path (lowercase, digits, _ -)
+# rtsp  — full RTSP stream URL
+cameras:
+  - slug: front-door
+    rtsp: rtsp://user:pass@192.168.1.10:554/stream1
+
+  - slug: backyard
+    rtsp: rtsp://user:pass@192.168.1.11:554/stream1
+
+  - slug: garage
+    rtsp: rtsp://user:pass@192.168.1.12:554/stream1
