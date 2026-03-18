@@ -78,7 +78,7 @@ function captureSnapshot(cam) {
 
   state.capturing = true;
   const outPath = path.join(SNAPSHOT_DIR, `${cam.slug}.jpg`);
-  const tmpPath = `${outPath}.tmp`;
+  const tmpPath = path.join(SNAPSHOT_DIR, `${cam.slug}.tmp.jpg`);
 
   // ffmpeg args:
   //   -rtsp_transport tcp   — more reliable over TCP
