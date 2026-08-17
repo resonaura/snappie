@@ -1,37 +1,73 @@
-# snappie
+# snappie 📷⚡
 
-Multi-camera RTSP snapshot server. Grabs a JPEG frame from each RTSP stream on a configurable interval and exposes them over HTTP.
-
----
-
-## How it works
-
-- Reads `config.yaml` to get the list of cameras and settings
-- Runs FFmpeg in the background every `interval` seconds to capture a frame from each RTSP stream
-- Serves each snapshot at `http://<host>:<port>/<slug>`
+High-performance, resource-optimized multi-camera RTSP snapshot server with Hardware Acceleration (NVIDIA CUDA/NVDEC, Intel/AMD VA-API, Apple VideoToolbox) and Zero-Disk In-Memory Caching.
 
 ---
 
-## Configuration
+## Key Features
 
-Create a `config.yaml` file on your host (e.g. `/opt/snappie/config.yaml`):
+- **⚡ Hardware Acceleration (GPU):**
+  - **NVIDIA GPU (CUDA / NVDEC):** Offloads H.264 / HEVC video decoding directly to NVIDIA graphics cards.
+  - **Intel / AMD (VA-API / QSV):** Uses QuickSync and VA-API render devices (`/dev/dri/renderD128`).
+  - **Apple Silicon (VideoToolbox):** Native hardware decoding on macOS.
+  - **Graceful CPU Fallback:** If GPU memory or decoder is busy/unsupported, automatically falls back to CPU without failing client requests.
+- **🚀 Zero-Disk In-Memory Pipe (RAM):**
+  - Snapshots are streamed directly from FFmpeg stdout to Node.js `Buffer` in RAM.
+  - No disk wear, no filesystem lag, response latency `< 1ms`.
+  - Conditional HTTP caching (`304 Not Modified` via `ETag` and `Last-Modified`).
+- **⏱️ Ultra-Fast RTSP Tuning:**
+  - `nobuffer`, `low_delay`, and optimized `probesize` / `analyzeduration` (down from 5s to milliseconds).
+- **🎛️ Staggered Scheduling & Concurrency Control:**
+  - Distributes camera polling smoothly across the interval to prevent CPU/GPU spikes.
+  - Built-in semaphore queue limits parallel FFmpeg processes (`max_concurrent`).
+- **🎨 Beautiful Terminal Logging:**
+  - Real-time ANSI color-coded logs with execution durations (`[120ms]`), image sizes, accelerator badges (`⚡ [CUDA]`, `🚀 [VAAPI]`, `⚙️ [CPU]`), and timestamps.
+- **📊 Rich Diagnostics & Health API:**
+  - Real-time monitoring of RAM usage, average latencies, success/failure counts, and system status via `/health`.
 
-```/dev/null/config.yaml#L1-20
+---
+
+## Configuration (`config.yaml`)
+
+```yaml
 # Port the HTTP server listens on
 port: 1985
 
 # How often (in seconds) to grab a new frame from each camera
 interval: 10
 
-# List of RTSP cameras
-# slug  — URL-friendly name used as the HTTP endpoint path (lowercase, digits, _ -)
-# rtsp  — full RTSP stream URL
+# Hardware acceleration engine:
+# auto         — auto-detect best available (cuda -> vaapi -> qsv -> videotoolbox -> cpu)
+# cuda         — NVIDIA GPU (NVDEC)
+# vaapi        — Intel / AMD GPU via VA-API (/dev/dri/renderD128)
+# qsv          — Intel Quick Sync Video
+# videotoolbox — Apple Silicon (macOS)
+# cpu          — Pure software decoding
+hwaccel: auto
+
+# JPEG image quality: 1 (highest) to 31 (lowest). Default: 2 (High)
+quality: 2
+
+# Timeout (seconds) before terminating FFmpeg capture
+timeout: 15
+
+# Max concurrent FFmpeg processes (smooths CPU / VRAM usage)
+max_concurrent: 4
+
+# Save snapshots to disk (snapshots/<slug>.jpg) in addition to memory
+save_to_disk: false
+
+# RTSP transport protocol: tcp (recommended) or udp
+rtsp_transport: tcp
+
+# List of cameras
 cameras:
   - slug: front-door
     rtsp: rtsp://user:pass@192.168.1.10:554/stream1
 
   - slug: backyard
     rtsp: rtsp://user:pass@192.168.1.11:554/stream1
+    # hwaccel: cuda  # (Optional: per-camera override)
 
   - slug: garage
     rtsp: rtsp://user:pass@192.168.1.12:554/stream1
@@ -39,102 +75,114 @@ cameras:
 
 ---
 
-## Run with Docker
+## Quick Start with Docker
 
-This command starts the container, mounts your config, and makes it survive reboots automatically:
-
-```/dev/null/run.sh#L1-8
+### 1. Standard / CPU / Auto
+```bash
 docker run -d \
   --name snappie \
   --restart always \
-  -p 1985:1985 \
+  --network host \
   -v /opt/snappie/config.yaml:/config/config.yaml:ro \
   ghcr.io/resonaura/snappie:latest
 ```
 
-> Replace `/opt/snappie/config.yaml` with the actual path to your config file.
->
-> `--restart always` ensures the container starts automatically on system boot and restarts itself if it crashes.
+### 2. NVIDIA GPU Acceleration (CUDA / NVDEC)
+Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) on the host.
+
+```bash
+docker run -d \
+  --name snappie \
+  --restart always \
+  --network host \
+  --gpus all \
+  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
+  ghcr.io/resonaura/snappie:latest
+```
+
+### 3. Intel / AMD VA-API Acceleration
+```bash
+docker run -d \
+  --name snappie \
+  --restart always \
+  --network host \
+  --device /dev/dri:/dev/dri \
+  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
+  ghcr.io/resonaura/snappie:latest
+```
 
 ---
 
-## Run with Docker Compose
+## Docker Compose
 
-Create a `docker-compose.yml` alongside your config:
-
-```/dev/null/docker-compose.yml#L1-16
+```yaml
 services:
   snappie:
     image: ghcr.io/resonaura/snappie:latest
     container_name: snappie
     restart: always
-    ports:
-      - "1985:1985"
+    network_mode: host
     volumes:
       - ./config.yaml:/config/config.yaml:ro
+    # For NVIDIA GPU, uncomment the block below:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu, video]
 ```
 
-Then start it:
-
-```/dev/null/start.sh#L1-2
+Run with:
+```bash
 docker compose up -d
 ```
 
-To update to a newer image:
-
-```/dev/null/update.sh#L1-3
-docker compose pull
-docker compose up -d
-```
-
 ---
 
-## Build locally
+## HTTP Endpoints
 
-```/dev/null/build.sh#L1-5
-git clone https://github.com/resonaura/snappie.git
-cd snappie
-docker build -t snappie .
-docker run -d --name snappie --restart always -p 1985:1985 \
-  -v /opt/snappie/config.yaml:/config/config.yaml:ro snappie
-```
+| Endpoint | Method | Description |
+|---|---|---|
+| `/<slug>` | `GET` | Instant snapshot served directly from RAM (JPEG) |
+| `/live/<slug>` | `GET` | Forces an immediate fresh frame capture on demand |
+| `/health` | `GET` | Detailed JSON health, memory usage, accelerator status, latencies, and camera states |
 
----
+### Health Check Example (`/health`)
 
-## Endpoints
-
-| Endpoint | Description |
-|---|---|
-| `GET /<slug>` | Latest JPEG snapshot for that camera |
-| `GET /health` | JSON status of all cameras (last success, last error, snapshot ready) |
-
-### Examples
-
-```/dev/null/examples.sh#L1-4
-curl http://localhost:1985/front-door   # returns JPEG image
-curl http://localhost:1985/health       # returns JSON status
-```
-
----
-
-## Health check response
-
-```/dev/null/health.json#L1-18
+```json
 {
   "status": "ok",
+  "uptime": "1420s",
   "interval": 10,
+  "system": {
+    "defaultHwaccel": "cuda",
+    "availableHwaccels": ["cuda", "vaapi", "vdpau"],
+    "configuredHwaccel": "auto",
+    "memory": {
+      "rss": "42.5 MB",
+      "heapUsed": "18.2 MB"
+    },
+    "concurrency": {
+      "active": 0,
+      "queued": 0,
+      "max": 4
+    }
+  },
   "cameras": [
     {
       "slug": "front-door",
-      "lastSuccess": "2025-01-15T10:23:45.123Z",
+      "source": "rtsp://user:****@192.168.1.10:554/stream1",
+      "ready": true,
+      "hwaccel": "cuda",
+      "lastSuccess": "2026-08-17T09:05:00.123Z",
       "lastError": null,
-      "snapshotReady": true
-    },
-    {
-      "slug": "backyard",
-      "lastSuccess": "2025-01-15T10:23:46.456Z",
-      "lastError": null,
-      "snapshotReady": true
+      "lastDurationMs": 142,
+      "avgDurationMs": 138,
+      "sizeBytes": 284120,
+      "successCount": 142,
+      "errorCount": 0
     }
   ]
 }
@@ -142,8 +190,11 @@ curl http://localhost:1985/health       # returns JSON status
 
 ---
 
-## Notes
+## Build & Run Locally
 
-- Snapshots are stored inside the container at `/usr/src/app/snapshots/`. They are regenerated on each run, so no persistent volume is needed for them.
-- If FFmpeg cannot connect to a camera, the previous snapshot is kept and the error is visible in `/health`.
-- Slugs must be lowercase and contain only letters, digits, `-` and `_`.
+```bash
+git clone https://github.com/resonaura/snappie.git
+cd snappie
+npm install
+node index.js
+```

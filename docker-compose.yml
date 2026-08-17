@@ -1,0 +1,49 @@
+services:
+  # -------------------------------------------------------------------------
+  # Standard CPU / Auto deployment
+  # -------------------------------------------------------------------------
+  snappie:
+    image: ghcr.io/resonaura/snappie:latest
+    container_name: snappie
+    restart: always
+    network_mode: host
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+    environment:
+      - NODE_ENV=production
+
+  # -------------------------------------------------------------------------
+  # NVIDIA GPU Acceleration (CUDA / NVDEC)
+  # Requires nvidia-container-toolkit installed on the host
+  # -------------------------------------------------------------------------
+  snappie-nvidia:
+    image: ghcr.io/resonaura/snappie:latest
+    container_name: snappie-nvidia
+    restart: always
+    network_mode: host
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, video, compute]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+
+  # -------------------------------------------------------------------------
+  # Intel / AMD VA-API Hardware Acceleration
+  # Passes through /dev/dri for hardware decoding
+  # -------------------------------------------------------------------------
+  snappie-vaapi:
+    image: ghcr.io/resonaura/snappie:latest
+    container_name: snappie-vaapi
+    restart: always
+    network_mode: host
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
