@@ -2,7 +2,7 @@
 
 # snappie 📷⚡
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Build & Publish](https://github.com/resonaura/snappie/actions/workflows/publish.yaml/badge.svg)](https://github.com/resonaura/snappie/actions/workflows/publish.yaml)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Add--on-orange.svg)](https://www.home-assistant.io/)
