@@ -1,0 +1,16 @@
+{
+  "name": "snappie",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "Multi-camera RTSP snapshot HTTP server",
+  "dependencies": {
+    "express": "^5.2.1",
+    "js-yaml": "^4.1.1"
+  }
+}

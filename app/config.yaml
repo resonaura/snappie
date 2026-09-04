@@ -1,0 +1,47 @@
+name: "Snappie"
+slug: "snappie"
+description: "High-performance multi-camera RTSP snapshot server with Hardware Acceleration"
+version: "1.0.0"
+image: "ghcr.io/resonaura/snappie/{arch}"
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+init: false
+startup: services
+boot: auto
+host_network: true
+apparmor: false
+map:
+  - config:rw
+  - share:rw
+devices:
+  - /dev/dri
+  - /dev/dri/renderD128
+options:
+  port: 1985
+  interval: 10
+  hwaccel: "auto"
+  quality: 2
+  timeout: 15
+  max_concurrent: 4
+  rtsp_transport: "tcp"
+  save_to_disk: false
+  cameras:
+    - slug: "front-door"
+      rtsp: "rtsp://user:pass@192.168.1.10:554/stream1"
+schema:
+  port: port
+  interval: int(1,3600)
+  hwaccel: list(auto|cuda|vaapi|qsv|videotoolbox|cpu)
+  quality: int(1,31)
+  timeout: int(3,120)
+  max_concurrent: int(1,32)
+  rtsp_transport: list(tcp|udp)
+  save_to_disk: bool
+  cameras:
+    - slug: str
+      rtsp: str
+      hwaccel: list(auto|cuda|vaapi|qsv|videotoolbox|cpu)?

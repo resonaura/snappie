@@ -1,0 +1,45 @@
+# snappie configuration
+
+# Port the HTTP server listens on
+port: 1985
+
+# How often (in seconds) to grab a new frame from each camera
+interval: 10
+
+# Hardware acceleration mode:
+# auto         — auto-detect best available (cuda -> vaapi -> qsv -> videotoolbox -> cpu)
+# cuda         — NVIDIA GPU (NVDEC)
+# vaapi        — Intel / AMD GPU via VA-API (/dev/dri/renderD128)
+# qsv          — Intel Quick Sync Video
+# videotoolbox — Apple Silicon (macOS)
+# cpu          — Pure software decoding (lowest resource footprint for small cams)
+hwaccel: auto
+
+# JPEG snapshot image quality: 1 (best) to 31 (lowest). Default: 2 (High quality)
+quality: 2
+
+# Maximum timeout (in seconds) for grabbing a single frame before killing FFmpeg
+timeout: 15
+
+# Maximum parallel FFmpeg processes to run concurrently (protects CPU/GPU from spikes)
+max_concurrent: 4
+
+# Save snapshots to disk (snapshots/<slug>.jpg) in addition to in-memory caching
+save_to_disk: false
+
+# RTSP transport protocol: tcp or udp (tcp is more reliable over LAN/WAN)
+rtsp_transport: tcp
+
+# List of cameras
+# slug  — URL-friendly name, used as the HTTP endpoint path (lowercase, digits, _ -)
+# rtsp  — full RTSP stream URL (or HTTP snapshot URL)
+# hwaccel (optional) — per-camera hardware acceleration override
+cameras:
+  - slug: front-door
+    rtsp: rtsp://user:pass@192.168.1.10:554/stream1
+
+  - slug: backyard
+    rtsp: rtsp://user:pass@192.168.1.11:554/stream1
+
+  - slug: garage
+    rtsp: rtsp://user:pass@192.168.1.12:554/stream1

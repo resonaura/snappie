@@ -7,6 +7,7 @@ on:
     tags:
       - 'v*'
     paths:
+      - 'app/**'
       - 'index.js'
       - 'package.json'
       - 'Dockerfile'
@@ -18,8 +19,37 @@ permissions:
   packages: write
 
 jobs:
-  publish:
-    name: Build & Publish Multi-Arch Image (amd64, arm64)
+  # 1. Home Assistant Add-on Multi-Arch Builder
+  publish-addon:
+    name: Build & Publish HA Add-on (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, amd64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Publish Home Assistant Add-on Image
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            --${{ matrix.arch }} \
+            --target /data/app \
+            --image "snappie/{arch}" \
+            --docker-hub "ghcr.io/${{ github.repository_owner }}"
+
+  # 2. Standalone Multi-Arch Docker Image (for standalone Docker users)
+  publish-standalone:
+    name: Build & Publish Standalone Docker Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -48,7 +78,7 @@ jobs:
             type=ref,event=tag
             type=sha,format=short
 
-      - name: Build and push Multi-Arch Image
+      - name: Build and push Standalone Multi-Arch Image
         uses: docker/build-push-action@v5
         with:
           context: .

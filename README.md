@@ -1,10 +1,108 @@
+<img src="icon.png" width="64" height="64" alt="Snappie Icon" />
+
 # snappie 📷⚡
 
-High-performance, resource-optimized multi-camera RTSP snapshot server with Hardware Acceleration (NVIDIA CUDA/NVDEC, Intel/AMD VA-API, Apple VideoToolbox) and Zero-Disk In-Memory Caching.
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
+[![License](https://img.shields.io/badge/license-ISC-green.svg)](LICENSE)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Add--on-orange.svg)](https://www.home-assistant.io/)
+[![HW-Accel](https://img.shields.io/badge/HW--Accel-CUDA%20%7C%20VA--API%20%7C%20QSV%20%7C%20VT-blueviolet.svg)](#-key-features)
+[![Docker GHCR](https://img.shields.io/badge/Docker-GHCR-2496ED?logo=docker&logoColor=white)](https://github.com/resonaura/snappie/pkgs/container/snappie)
+
+High-performance, resource-optimized multi-camera RTSP snapshot server with **Hardware Acceleration** (NVIDIA CUDA/NVDEC, Intel/AMD VA-API, Apple VideoToolbox, Intel QuickSync) and **Zero-Disk In-Memory Caching** for Home Assistant, go2rtc, and Standalone Docker.
 
 ---
 
-## Key Features
+## 🚀 Installation & Quick Start
+
+### Option 1: Home Assistant Add-on (Recommended)
+
+#### 1-Click Install
+
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fresonaura%2Fsnappie)
+
+#### Manual Install (Home Assistant)
+
+1. Navigate to **Settings → Add-ons → Add-on Store → ⋮ → Repositories** in Home Assistant.
+2. Add the repository:
+   ```text
+   https://github.com/resonaura/snappie
+   ```
+3. Find and select **Snappie** in the store and click **Install**.
+4. Configure your cameras and hardware acceleration in the **Configuration** tab.
+5. Click **Start**!
+
+---
+
+### Option 2: Docker Compose (Standalone)
+
+Create a `docker-compose.yml`:
+
+```yaml
+services:
+  snappie:
+    image: ghcr.io/resonaura/snappie:latest
+    container_name: snappie
+    restart: always
+    network_mode: host
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+    # For Intel / AMD VA-API GPU acceleration:
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # For NVIDIA GPU, uncomment below:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu, video]
+```
+
+Run with:
+```bash
+docker compose up -d
+```
+
+---
+
+### Option 3: Standard Docker Run
+
+#### Standard / CPU / Auto:
+```bash
+docker run -d \
+  --name snappie \
+  --restart always \
+  --network host \
+  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
+  ghcr.io/resonaura/snappie:latest
+```
+
+#### Intel / AMD VA-API Hardware Acceleration:
+```bash
+docker run -d \
+  --name snappie \
+  --restart always \
+  --network host \
+  --device /dev/dri:/dev/dri \
+  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
+  ghcr.io/resonaura/snappie:latest
+```
+
+#### NVIDIA GPU Acceleration (CUDA / NVDEC):
+```bash
+docker run -d \
+  --name snappie \
+  --restart always \
+  --network host \
+  --gpus all \
+  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
+  ghcr.io/resonaura/snappie:latest
+```
+
+---
+
+## ✨ Key Features
 
 - **⚡ Hardware Acceleration (GPU):**
   - **NVIDIA GPU (CUDA / NVDEC):** Offloads H.264 / HEVC video decoding directly to NVIDIA graphics cards.
@@ -27,7 +125,7 @@ High-performance, resource-optimized multi-camera RTSP snapshot server with Hard
 
 ---
 
-## Configuration (`config.yaml`)
+## ⚙️ Configuration (`config.yaml`)
 
 ```yaml
 # Port the HTTP server listens on
@@ -75,73 +173,7 @@ cameras:
 
 ---
 
-## Quick Start with Docker
-
-### 1. Standard / CPU / Auto
-```bash
-docker run -d \
-  --name snappie \
-  --restart always \
-  --network host \
-  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
-  ghcr.io/resonaura/snappie:latest
-```
-
-### 2. NVIDIA GPU Acceleration (CUDA / NVDEC)
-Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) on the host.
-
-```bash
-docker run -d \
-  --name snappie \
-  --restart always \
-  --network host \
-  --gpus all \
-  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
-  ghcr.io/resonaura/snappie:latest
-```
-
-### 3. Intel / AMD VA-API Acceleration
-```bash
-docker run -d \
-  --name snappie \
-  --restart always \
-  --network host \
-  --device /dev/dri:/dev/dri \
-  -v /opt/snappie/config.yaml:/config/config.yaml:ro \
-  ghcr.io/resonaura/snappie:latest
-```
-
----
-
-## Docker Compose
-
-```yaml
-services:
-  snappie:
-    image: ghcr.io/resonaura/snappie:latest
-    container_name: snappie
-    restart: always
-    network_mode: host
-    volumes:
-      - ./config.yaml:/config/config.yaml:ro
-    # For NVIDIA GPU, uncomment the block below:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu, video]
-```
-
-Run with:
-```bash
-docker compose up -d
-```
-
----
-
-## HTTP Endpoints
+## 🌐 HTTP Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -190,7 +222,7 @@ docker compose up -d
 
 ---
 
-## Build & Run Locally
+## 🛠️ Build & Run Locally
 
 ```bash
 git clone https://github.com/resonaura/snappie.git
