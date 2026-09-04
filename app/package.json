@@ -7,7 +7,7 @@
     "start": "node index.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "Multi-camera RTSP snapshot HTTP server",
   "dependencies": {
     "express": "^5.2.1",
