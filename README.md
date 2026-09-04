@@ -4,6 +4,7 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
 [![License](https://img.shields.io/badge/license-ISC-green.svg)](LICENSE)
+[![Build & Publish](https://github.com/resonaura/snappie/actions/workflows/publish.yaml/badge.svg)](https://github.com/resonaura/snappie/actions/workflows/publish.yaml)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Add--on-orange.svg)](https://www.home-assistant.io/)
 [![HW-Accel](https://img.shields.io/badge/HW--Accel-CUDA%20%7C%20VA--API%20%7C%20QSV%20%7C%20VT-blueviolet.svg)](#-key-features)
 [![Docker GHCR](https://img.shields.io/badge/Docker-GHCR-2496ED?logo=docker&logoColor=white)](https://github.com/resonaura/snappie/pkgs/container/snappie)
