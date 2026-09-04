@@ -1,4 +1,5 @@
 <img src="icon.png" width="64" height="64" alt="Snappie Icon" />
+
 # snappie 📷⚡
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](package.json)
