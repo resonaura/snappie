@@ -1,7 +1,7 @@
 name: "Snappie"
 slug: "snappie"
 description: "High-performance multi-camera RTSP snapshot server with Hardware Acceleration"
-version: "1.0.0"
+version: "1.0.1"
 image: "ghcr.io/resonaura/snappie/{arch}"
 arch:
   - aarch64
